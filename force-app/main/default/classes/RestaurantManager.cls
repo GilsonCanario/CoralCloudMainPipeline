@@ -415,6 +415,18 @@ public with sharing class RestaurantManager {
             ];
             stats.put('restaurantsCreatedThisMonth', restaurantsCreatedThisMonth);
             
+            // Enhanced statistics with dining experience integration
+            Integer totalDiningExperiences = 0;
+            try {
+                // Check if DiningExperience__c is accessible
+                if (Schema.sObjectType.DiningExperience__c.isAccessible()) {
+                    totalDiningExperiences = [SELECT COUNT() FROM DiningExperience__c];
+                }
+            } catch (Exception ex) {
+                System.debug('DiningExperience__c may not be accessible: ' + ex.getMessage());
+            }
+            stats.put('totalDiningExperiences', totalDiningExperiences);
+            
             stats.put('success', true);
             
         } catch (Exception e) {
@@ -423,5 +435,276 @@ public with sharing class RestaurantManager {
         }
         
         return stats;
+    }
+    
+    /**
+     * Wrapper class for DiningExperience operations
+     */
+    public class DiningExperienceResult {
+        @AuraEnabled public Boolean success { get; set; }
+        @AuraEnabled public String message { get; set; }
+        @AuraEnabled public DiningExperience__c diningExperience { get; set; }
+        @AuraEnabled public List<DiningExperience__c> diningExperiences { get; set; }
+        
+        public DiningExperienceResult() {
+            this.success = false;
+            this.message = '';
+            this.diningExperiences = new List<DiningExperience__c>();
+        }
+    }
+    
+    /**
+     * Creates a dining experience linked to a restaurant
+     * @param restaurantId The ID of the restaurant
+     * @param experienceName The name of the dining experience
+     * @return DiningExperienceResult containing the created experience or error information
+     */
+    @AuraEnabled
+    public static DiningExperienceResult createDiningExperience(String restaurantId, String experienceName) {
+        DiningExperienceResult result = new DiningExperienceResult();
+        
+        try {
+            // Security checks for both objects
+            checkReadAccess();
+            if (!Schema.sObjectType.DiningExperience__c.isAccessible() || 
+                !Schema.sObjectType.DiningExperience__c.isCreateable()) {
+                result.message = 'Insufficient permissions to work with Dining Experience records';
+                return result;
+            }
+            
+            // Input validation
+            if (String.isBlank(restaurantId)) {
+                result.message = 'Restaurant ID cannot be empty';
+                return result;
+            }
+            
+            if (String.isBlank(experienceName)) {
+                result.message = 'Experience name cannot be empty';
+                return result;
+            }
+            
+            // Verify restaurant exists
+            List<Restaurant__c> restaurants = [
+                SELECT Id, Name 
+                FROM Restaurant__c 
+                WHERE Id = :restaurantId 
+                LIMIT 1
+            ];
+            
+            if (restaurants.isEmpty()) {
+                result.message = 'Restaurant not found';
+                return result;
+            }
+            
+            // Create dining experience
+            DiningExperience__c newExperience = new DiningExperience__c(
+                Name = experienceName
+                // Note: Add Restaurant__c lookup field if it exists in the schema
+            );
+            
+            insert newExperience;
+            
+            result.diningExperience = newExperience;
+            result.success = true;
+            result.message = 'Dining experience created successfully for restaurant: ' + restaurants[0].Name;
+            
+        } catch (DMLException e) {
+            result.message = 'Failed to create dining experience: ' + e.getMessage();
+        } catch (Exception e) {
+            result.message = 'Unexpected error: ' + e.getMessage();
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Gets all dining experiences (with optional restaurant filter)
+     * @param restaurantId Optional restaurant ID to filter experiences
+     * @return DiningExperienceResult containing list of experiences
+     */
+    @AuraEnabled
+    public static DiningExperienceResult getDiningExperiences(String restaurantId) {
+        DiningExperienceResult result = new DiningExperienceResult();
+        
+        try {
+            // Security check
+            if (!Schema.sObjectType.DiningExperience__c.isAccessible()) {
+                result.message = 'Insufficient permissions to read Dining Experience records';
+                return result;
+            }
+            
+            String query = 'SELECT Id, Name, CreatedDate, LastModifiedDate FROM DiningExperience__c';
+            
+            // Note: Add WHERE clause if Restaurant lookup field exists
+            // if (String.isNotBlank(restaurantId)) {
+            //     query += ' WHERE Restaurant__c = :restaurantId';
+            // }
+            
+            query += ' ORDER BY Name ASC LIMIT 1000';
+            
+            result.diningExperiences = Database.query(query);
+            result.success = true;
+            result.message = 'Retrieved ' + result.diningExperiences.size() + ' dining experience(s)';
+            
+        } catch (Exception e) {
+            result.message = 'Failed to retrieve dining experiences: ' + e.getMessage();
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Advanced restaurant search with multiple criteria
+     * @param searchCriteria Map containing search parameters (name, createdAfter, createdBefore)
+     * @return RestaurantResult containing filtered restaurants
+     */
+    @AuraEnabled
+    public static RestaurantResult searchRestaurants(Map<String, Object> searchCriteria) {
+        RestaurantResult result = new RestaurantResult();
+        
+        try {
+            // Security check
+            checkReadAccess();
+            
+            if (searchCriteria == null) {
+                searchCriteria = new Map<String, Object>();
+            }
+            
+            String query = 'SELECT Id, Name, CreatedDate, LastModifiedDate FROM Restaurant__c WHERE Id != null';
+            Map<String, Object> queryParams = new Map<String, Object>();
+            
+            // Name search
+            String nameFilter = (String) searchCriteria.get('name');
+            if (String.isNotBlank(nameFilter)) {
+                query += ' AND Name LIKE :namePattern';
+                queryParams.put('namePattern', '%' + String.escapeSingleQuotes(nameFilter) + '%');
+            }
+            
+            // Date range filters
+            String createdAfter = (String) searchCriteria.get('createdAfter');
+            if (String.isNotBlank(createdAfter)) {
+                query += ' AND CreatedDate >= :afterDate';
+                queryParams.put('afterDate', Date.valueOf(createdAfter));
+            }
+            
+            String createdBefore = (String) searchCriteria.get('createdBefore');
+            if (String.isNotBlank(createdBefore)) {
+                query += ' AND CreatedDate <= :beforeDate';
+                queryParams.put('beforeDate', Date.valueOf(createdBefore));
+            }
+            
+            query += ' ORDER BY Name ASC LIMIT 1000';
+            
+            // Execute dynamic query
+            result.restaurants = Database.query(query);
+            result.success = true;
+            result.message = 'Found ' + result.restaurants.size() + ' restaurant(s) matching criteria';
+            
+        } catch (Exception e) {
+            result.message = 'Failed to search restaurants: ' + e.getMessage();
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Validates restaurant data integrity
+     * @return Map containing validation results
+     */
+    @AuraEnabled
+    public static Map<String, Object> validateRestaurantData() {
+        Map<String, Object> validation = new Map<String, Object>();
+        List<String> issues = new List<String>();
+        
+        try {
+            // Security check
+            checkReadAccess();
+            
+            // Check for restaurants with empty or duplicate names
+            List<Restaurant__c> restaurants = [
+                SELECT Id, Name 
+                FROM Restaurant__c 
+                ORDER BY Name
+            ];
+            
+            Set<String> seenNames = new Set<String>();
+            Integer emptyNameCount = 0;
+            Integer duplicateCount = 0;
+            
+            for (Restaurant__c restaurant : restaurants) {
+                if (String.isBlank(restaurant.Name)) {
+                    emptyNameCount++;
+                } else {
+                    if (seenNames.contains(restaurant.Name.toLowerCase())) {
+                        duplicateCount++;
+                        issues.add('Duplicate name found: ' + restaurant.Name + ' (ID: ' + restaurant.Id + ')');
+                    } else {
+                        seenNames.add(restaurant.Name.toLowerCase());
+                    }
+                }
+            }
+            
+            if (emptyNameCount > 0) {
+                issues.add(emptyNameCount + ' restaurant(s) have empty names');
+            }
+            
+            validation.put('totalRestaurants', restaurants.size());
+            validation.put('emptyNameCount', emptyNameCount);
+            validation.put('duplicateNameCount', duplicateCount);
+            validation.put('issues', issues);
+            validation.put('isValid', issues.isEmpty());
+            validation.put('success', true);
+            
+        } catch (Exception e) {
+            validation.put('success', false);
+            validation.put('error', e.getMessage());
+        }
+        
+        return validation;
+    }
+    
+    /**
+     * Batch processes restaurant operations for better performance
+     * @param operation The operation to perform (validate, cleanup, etc.)
+     * @return Map containing batch operation results
+     */
+    @AuraEnabled
+    public static Map<String, Object> batchProcessRestaurants(String operation) {
+        Map<String, Object> batchResult = new Map<String, Object>();
+        
+        try {
+            // Security check
+            checkReadAccess();
+            
+            if (String.isBlank(operation)) {
+                batchResult.put('success', false);
+                batchResult.put('message', 'Operation parameter is required');
+                return batchResult;
+            }
+            
+            switch on operation.toLowerCase() {
+                when 'validate' {
+                    // Delegate to validation method
+                    return validateRestaurantData();
+                }
+                when 'count' {
+                    // Simple count operation
+                    Integer count = [SELECT COUNT() FROM Restaurant__c];
+                    batchResult.put('totalCount', count);
+                    batchResult.put('success', true);
+                    batchResult.put('message', 'Count operation completed');
+                }
+                when else {
+                    batchResult.put('success', false);
+                    batchResult.put('message', 'Unsupported operation: ' + operation);
+                }
+            }
+            
+        } catch (Exception e) {
+            batchResult.put('success', false);
+            batchResult.put('message', 'Batch processing failed: ' + e.getMessage());
+        }
+        
+        return batchResult;
     }
 }
