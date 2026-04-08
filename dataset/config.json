@@ -1,0 +1,44 @@
+{
+  "objectsList": {
+    "credit_rule__c": {
+      "fields": [
+        {
+          "name": "Id",
+          "type": "id"
+        },
+        {
+          "name": "Trigger_Object__c",
+          "type": "picklist"
+        },
+        {
+          "name": "Credit_Amount__c",
+          "type": "currency"
+        },
+        {
+          "name": "Trigger_Event__c",
+          "type": "picklist"
+        },
+        {
+          "name": "Name",
+          "type": "string"
+        },
+        {
+          "name": "Description__c",
+          "type": "textarea"
+        },
+        {
+          "name": "Active__c",
+          "type": "boolean"
+        }
+      ],
+      "recordIds": [
+        "a1lOy000006kDJlIAM",
+        "a1lOy000006kDJnIAM",
+        "a1lOy000006kDJoIAM",
+        "a1lOy000007blITIAY"
+      ],
+      "duplicateCheck": [],
+      "numRecords": 4
+    }
+  }
+}
