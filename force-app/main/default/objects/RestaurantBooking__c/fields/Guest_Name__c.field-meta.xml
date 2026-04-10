@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Guest_Name__c</fullName>
+    <label>Guest Name</label>
+    <description>Name of the guest making the restaurant booking</description>
+    <inlineHelpText>Enter the full name of the guest who will be dining</inlineHelpText>
+    <type>Text</type>
+    <length>255</length>
+    <required>true</required>
+</CustomField>

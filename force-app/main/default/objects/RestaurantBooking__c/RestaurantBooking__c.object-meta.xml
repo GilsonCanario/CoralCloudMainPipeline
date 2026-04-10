@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Restaurant Booking</label>
+    <pluralLabel>Restaurant Bookings</pluralLabel>
+    <description>Object used to track and manage restaurant reservations from external booking systems via REST API integration.</description>
+    <nameField>
+        <label>Booking Number</label>
+        <type>AutoNumber</type>
+        <displayFormat>RB-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+</CustomObject>
