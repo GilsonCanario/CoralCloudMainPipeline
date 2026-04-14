@@ -1,5 +1,5 @@
 Id,Active__c,Credit_Amount__c,Description__c,Name,Trigger_Event__c,Trigger_Object__c
-a1lOy000006kDJlIAM,true,5,Automatically awards $5 resort credit when a guest creates a new booking for any experience.,New Booking Bonus,Created,Booking
+a1lOy000006kDJlIAM,true,5,This credit rule automatically awards $5 resort credit when a guest creates a new booking for any experience.,New Booking Bonus,Created,Booking
 a1lOy000006kDJnIAM,true,2,Automatically awards $2 resort credit when a case is created and assigned to a guest contact.,Case Assignment Credit,Created,Case
-a1lOy000006kDJoIAM,true,2,Automatically awards $2 additional resort credit when a case assigned to a guest is successfully closed.,Case Resolution Bonus,Closed,Case
-a1lOy000007blITIAY,true,5,Automatically awards $5 resort credit when a guest submits a review for an experience.,Review Reward,Created,Guest Review
+a1lOy000006kDJoIAM,true,2,This credit rule automatically awards $2 additional resort credit when a case assigned to a guest is successfully closed.,Case Resolution Bonus,Closed,Case
+a1lOy000007blITIAY,true,5,This credit rule automatically awards $5 resort credit when a guest submits a review for an experience.,Review Reward,Created,Guest Review
