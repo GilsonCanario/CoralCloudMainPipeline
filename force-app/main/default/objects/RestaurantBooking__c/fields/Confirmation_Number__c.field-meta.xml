@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Confirmation_Number__c</fullName>
+    <label>Confirmation Number</label>
+    <description>Unique confirmation number for the booking used for external system reference</description>
+    <inlineHelpText>This is your booking confirmation number - provide this when you arrive at the restaurant</inlineHelpText>
+    <type>AutoNumber</type>
+    <displayFormat>CONF-{000000}</displayFormat>
+    <startingNumber>1</startingNumber>
+    <externalId>true</externalId>
+</CustomField>
