@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restaurant__c</fullName>
+    <label>Restaurant</label>
+    <description>Links this booking to the specific restaurant where the reservation is made</description>
+    <inlineHelpText>Select the restaurant for this booking</inlineHelpText>
+    <type>Lookup</type>
+    <referenceTo>Restaurant__c</referenceTo>
+    <relationshipLabel>Restaurant Bookings</relationshipLabel>
+    <relationshipName>Restaurant_Bookings</relationshipName>
+    <required>true</required>
+    <deleteConstraint>Restrict</deleteConstraint>
+</CustomField>
